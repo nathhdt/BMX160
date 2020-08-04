@@ -1,2 +1,2 @@
 # calistogravity
-Calisto Gravity (BMX150)
+Dépôt de développement du Calisto Gravity (Bosch Sensortec BMX160)
