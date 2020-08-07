@@ -1,5 +1,6 @@
 #include "bmx160.h" // Bibliothèque du capteur
 #include <future>   // Bibliothèque pour threads
+#include <iomanip>  // Affichage console
 #include <iostream>
 #include <fstream>
 #include <iomanip>  // Pour utiliser "setprecision"
@@ -11,19 +12,18 @@ using namespace std;
 
 
 // Fonctions de découpe ligne CSV
-void splitter(const string &chaine, char delimiteur, vector<float> &elements)
+void splitter(const string &chaine, char delimiteur, vector<string> &elements)
 {
 	stringstream ss(chaine);
 	string sousChaine;
 	while (getline(ss, sousChaine, delimiteur))
 	{
-		float sousChaineFloat = std::stof(sousChaine);
-		elements.push_back(sousChaineFloat);
+		elements.push_back(sousChaine);
 	}
 }
-vector<float> split(const string &chaine, char delimiteur)
+vector<string> split(const string &chaine, char delimiteur)
 {
-	vector<float> elements;
+	vector<string> elements;
 	splitter(chaine, delimiteur, elements);
 	return elements;
 }
@@ -36,9 +36,8 @@ int lectureCSV(string _nomFichierCSV)
 	BMX160 * calistoGravity;
 	calistoGravity = new BMX160;
 
-	// A chaque fois qu'on récupère des données de l'accéléromètre, on ré-exécute cette boucle
-	// delta_t = temps entre la réception de 2 données du gyroscope, ici on le définit sur 1 seconde
-	float delta_t = 1; //Seconde
+	//Variables pour calculer le delta_t
+	int hrs_old = 0;
 
 	//Lecture du CSV (ici devrait se situer la routine de récupération des données du Calisto)
 	string ligne;
@@ -52,31 +51,70 @@ int lectureCSV(string _nomFichierCSV)
 
 		if (streamCSVSortie)
 		{
-			int iterations = 0;
+			int iterations = -2;
+
+			//En-tête fichier sortie CSV
+			streamCSVSortie << fixed;
+			streamCSVSortie << std::setprecision(6) << "id;histo;tag;hrs;gx;gy;gz;ax;ay;az;vx;vy;vz;px;py;pz" << endl;
+
 			while (getline(streamLectureCSV, ligne))
 			{
-				iterations++;
-				vector<float> donnees = split(ligne, ';');
-				cout << endl << endl << "IMU Datas        | Iteration n." << iterations << endl;
+				if (iterations == -2) {    // Première ligne, titres des colonnes du tableau
+					iterations++;
+				}
+				else if (iterations == -1) // Seconde ligne, premières données du tableau
+				{
+					iterations++;
+					vector<string> donnees = split(ligne, ';');
+					hrs_old = std::stoi(donnees[3]);
 
-				// Convertir des degrés/s en radians/s
-				//gx *= 0.0174533f;
-				//gy *= 0.0174533f;
-				//gz *= 0.0174533f;
+					calistoGravity->setOldAcceleration(stof(donnees[7]), stof(donnees[8]), stof(donnees[9])); // (à mettre en m/s²)
+				}
+				else
+				{
+					iterations++;
+					vector<string> donnees = split(ligne, ';');
+					cout << endl << endl << endl << "IMU Datas        | Iteration n." << iterations << endl;
 
-				// Mise à jour des données accéléromètre et gyroscope de l'objet
-				calistoGravity->setAcceleration(donnees[7], donnees[8], donnees[9]); // (à mettre en rad/s)
-				calistoGravity->setRotation(donnees[4], donnees[5], donnees[6]);
+					// A chaque fois qu'on récupère des données de l'accéléromètre, on ré-exécute cette boucle
+					// delta_t = temps entre la réception de 2 données du capteur, ici on le définit sur 1 seconde
 
-				// Calcul du quaternion de rotation
-				calistoGravity->orientationUpdate(delta_t);
+					float delta_t = (stoi(donnees[3]) - hrs_old); // Valeur d'avant - Valeur de maintenant (colonne hrs du CSV)
+					delta_t /= 1000;                              // delta_t exprimé en seconde (ms/1000 -> s)
+					hrs_old = stoi(donnees[3]);                   // Nouvelle valeur devient l'ancienne valeur pour préparer la prochaine itération
+					cout << "Delta T          | " << delta_t << "s" << endl;
 
-				// Recalcul vecteur accélération
-				calistoGravity->updateAccelerationOrientation();
+					// Mise à jour des données accéléromètre et gyroscope de l'objet
 
-				//Ecriture dans datas_result.csv
-				streamCSVSortie << fixed;
-				streamCSVSortie << std::setprecision(6) << (int)donnees[0] << ";" << (int)donnees[1] << ";" << (int)donnees[2] << ";" << (int)donnees[3] << ";0;0;0;" << calistoGravity->acceleration(0) << ";" << calistoGravity->acceleration(1) << ";" << calistoGravity->acceleration(2) << endl;
+					// /!\ Les dimensions du fichier CSV doivent être en rad/s pour gx, gy, gz et m/s² pour ax, ay, az)
+					calistoGravity->setAcceleration(stof(donnees[7]), stof(donnees[8]), stof(donnees[9])); // (à mettre en m/s²)
+					calistoGravity->setRotation(stof(donnees[4]), stof(donnees[5]), stof(donnees[6]));     // (à mettre en rad/s)
+
+					// Calcul du quaternion de rotation
+					calistoGravity->orientationUpdate(delta_t);
+
+					// Calcul & affichage angles d'Euler
+					calistoGravity->updateEulerAngles();
+					cout << "Euler angles     | x : " << setw(10) << calistoGravity->eulerAngle(0) << "		y : " << setw(10) << calistoGravity->eulerAngle(1) << "		z : " << setw(10) << calistoGravity->eulerAngle(2) << endl;
+
+					cout << "_________________|______________________________________________________________________________________________" << endl;
+
+					// Recalcul vecteur accélération
+					cout << "ACCELERATION     | ax : " << setw(10) << calistoGravity->acceleration(0) << "		ay : " << setw(10) << calistoGravity->acceleration(1) << "		az : " << setw(10) << calistoGravity->acceleration(2) << "		|a| : " << setw(10) << calistoGravity->acceleration(3) << endl;
+					calistoGravity->updateAccelerationOrientation();
+					cout << "ACCELERAT. (NEW) | ax : " << setw(10) << calistoGravity->acceleration(0) << "		ay : " << setw(10) << calistoGravity->acceleration(1) << "		az : " << setw(10) << calistoGravity->acceleration(2) << "		|a| : " << setw(10) << calistoGravity->acceleration(3) << endl;
+
+					// Calcul vitesse & position (par intégration)
+					calistoGravity->integrationSpeedPosition(delta_t);
+					cout << "VELOCITY   (M/S) | vx : " << setw(10) << calistoGravity->velocity(0) << "		vy : " << setw(10) << calistoGravity->velocity(1) << "		vz : " << setw(10)	<< calistoGravity->velocity(2) << "		|v| : " << setw(10) << calistoGravity->velocity(3) << endl;
+					cout << "POSITION     (M) | px : " << setw(10) << calistoGravity->position(0) << "		py : " << setw(10) << calistoGravity->position(1) << "		pz : " << setw(10) << calistoGravity->position(2) << "		|p| : " << setw(10) << calistoGravity->position(3) << endl;
+
+					//Ecriture dans datas_result.csv
+					streamCSVSortie << fixed;
+					streamCSVSortie << std::setprecision(6) << stoi(donnees[0]) << ";" << stoi(donnees[1]) << ";" << stoi(donnees[2]) << ";" << stoi(donnees[3]) << ";0;0;0;" << calistoGravity->acceleration(0) << ";" << calistoGravity->acceleration(1) << ";" << calistoGravity->acceleration(2) << ";" << calistoGravity->velocity(0) << ";" << calistoGravity->velocity(1) << ";" << calistoGravity->velocity(2) << ";" << calistoGravity->position(0) << ";" << calistoGravity->position(1) << ";" << calistoGravity->position(2) << endl;
+				}
+
+				
 			}
 			streamLectureCSV.close();
 		}
@@ -123,5 +161,6 @@ int main()
 	}
 
 	// La lecture du CSV est terminée
+	cout << endl << endl <<"Please open datas_result.csv to get algorithm results." << endl << endl;
 	system("pause");
 }

@@ -1,2 +1,3 @@
 ﻿  main.cpp
+c:\users\nathan\documents\visual studio 2017\projects\calistogravity\calistogravity\main.cpp(82): warning C4244: 'initialisation' : conversion de 'int' en 'float', perte possible de données
   CalistoGravity.vcxproj -> C:\Users\Nathan\Documents\Visual Studio 2017\Projects\CalistoGravity\Debug\CalistoGravity.exe
