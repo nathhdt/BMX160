@@ -95,19 +95,19 @@ int lectureCSV(string _nomFichierCSV)
 
 					// Calcul & affichage angles d'Euler
 					calistoGravity->updateEulerAngles();
-					cout << "Euler angles     | x : " << setw(10) << calistoGravity->eulerAngle(0) << "		y : " << setw(10) << calistoGravity->eulerAngle(1) << "		z : " << setw(10) << calistoGravity->eulerAngle(2) << endl;
+					cout << "Euler angles     | x : " << setw(10) << calistoGravity->eulerAngle(0) << "deg		y : " << setw(10) << calistoGravity->eulerAngle(1) << "deg		z : " << setw(10) << calistoGravity->eulerAngle(2) << "deg" << endl;
 
 					cout << "_________________|______________________________________________________________________________________________" << endl;
 
 					// Recalcul vecteur accélération
-					cout << "ACCELERATION     | ax : " << setw(10) << calistoGravity->acceleration(0) << "		ay : " << setw(10) << calistoGravity->acceleration(1) << "		az : " << setw(10) << calistoGravity->acceleration(2) << "		|a| : " << setw(10) << calistoGravity->acceleration(3) << endl;
+					cout << "ACCELERA. (m/s2) | ax : " << setw(10) << calistoGravity->acceleration(0) << "		ay : " << setw(10) << calistoGravity->acceleration(1) << "		az : " << setw(10) << calistoGravity->acceleration(2) << "		|a| : " << setw(10) << calistoGravity->acceleration(3) << endl;
 					calistoGravity->updateAccelerationOrientation();
-					cout << "ACCELERAT. (NEW) | ax : " << setw(10) << calistoGravity->acceleration(0) << "		ay : " << setw(10) << calistoGravity->acceleration(1) << "		az : " << setw(10) << calistoGravity->acceleration(2) << "		|a| : " << setw(10) << calistoGravity->acceleration(3) << endl;
+					cout << "ACCELERAT. (new) | ax : " << setw(10) << calistoGravity->acceleration(0) << "		ay : " << setw(10) << calistoGravity->acceleration(1) << "		az : " << setw(10) << calistoGravity->acceleration(2) << "		|a| : " << setw(10) << calistoGravity->acceleration(3) << endl;
 
 					// Calcul vitesse & position (par intégration)
 					calistoGravity->integrationSpeedPosition(delta_t);
-					cout << "VELOCITY   (M/S) | vx : " << setw(10) << calistoGravity->velocity(0) << "		vy : " << setw(10) << calistoGravity->velocity(1) << "		vz : " << setw(10)	<< calistoGravity->velocity(2) << "		|v| : " << setw(10) << calistoGravity->velocity(3) << endl;
-					cout << "POSITION     (M) | px : " << setw(10) << calistoGravity->position(0) << "		py : " << setw(10) << calistoGravity->position(1) << "		pz : " << setw(10) << calistoGravity->position(2) << "		|p| : " << setw(10) << calistoGravity->position(3) << endl;
+					cout << "VELOCITY   (m/s) | vx : " << setw(10) << calistoGravity->velocity(0) << "		vy : " << setw(10) << calistoGravity->velocity(1) << "		vz : " << setw(10)	<< calistoGravity->velocity(2) << "		|v| : " << setw(10) << calistoGravity->velocity(3) << endl;
+					cout << "POSITION     (m) | px : " << setw(10) << calistoGravity->position(0) << "		py : " << setw(10) << calistoGravity->position(1) << "		pz : " << setw(10) << calistoGravity->position(2) << "		|p| : " << setw(10) << calistoGravity->position(3) << endl;
 
 					//Ecriture dans datas_result.csv
 					streamCSVSortie << fixed;
@@ -125,7 +125,7 @@ int lectureCSV(string _nomFichierCSV)
 	}
 	else
 	{
-		cout << endl << "Impossible d'ouvrir le dataset" << endl;
+		cout << endl << "Unable to open dataset" << endl;
 		return 1;
 	}
 
@@ -140,14 +140,14 @@ int main()
 	{
 		// Demande à l'utilisateur le fichier CSV d'entrée
 		string nomFichierCSV;
-		cout << "Entrer le nom du fichier CSV: ";
+		cout << "Enter CSV dataset filename: ";
 		cin >> nomFichierCSV;
 
 		// Clear console
 		system("cls");
 
 		// Ouverture d'un thread pour la lecture du fichier CSV
-		cout << nomFichierCSV << " est en cours de traitement..." << endl;
+		cout << nomFichierCSV << " is being processed..." << endl;
 		future csvReadThread = async(&lectureCSV, nomFichierCSV);
 
 		// On récupère le résultat de l'exécution du thread
@@ -161,6 +161,6 @@ int main()
 	}
 
 	// La lecture du CSV est terminée
-	cout << endl << endl <<"Please open datas_result.csv to get algorithm results." << endl << endl;
+	cout << endl << endl <<"Open datas_result.csv to get algorithm results." << endl << endl;
 	system("pause");
 }

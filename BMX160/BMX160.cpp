@@ -28,11 +28,12 @@ BMX160::BMX160()
 
 void BMX160::setAcceleration(float _ax, float _ay, float _az)
 {
-	// Composantes
+	// Sauvegarde des anciennes composantes
 	old_ax = ax;
 	old_ay = ay;
 	old_az = az;
 
+	// Composantes
 	ax = _ax;
 	ay = _ay;
 	az = _az;
@@ -52,7 +53,7 @@ void BMX160::setRotation(float _gx, float _gy, float _gz)
 
 void BMX160::setOldAcceleration(float _old_ax, float _old_ay, float _old_az)
 {
-	// Composantes
+	// Sauvegarde des composantes
 	old_ax = _old_ax;
 	old_ay = _old_ay;
 	old_az = _old_az;
