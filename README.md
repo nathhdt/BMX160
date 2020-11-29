@@ -1,2 +1,4 @@
-# calistogravity
-Dépôt de développement du Calisto Gravity (Bosch Sensortec BMX160)
+# BMX160
+Bosch Sensortec BMX160 development project
+
+https://www.enib.fr/~kerhoas/rescapt_madgwick.html
